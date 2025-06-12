@@ -8,6 +8,21 @@ import (
 	"strings"
 )
 
+type logger interface {
+	Print(args ...any)
+	Printf(f string, args ...any)
+	Fatal(args ...any)
+	Fatalf(f string, args ...any)
+	Panic(args ...any)
+	Panicf(f string, args ...any)
+}
+
+var forward logger = log.Default()
+
+func Forward(logger logger) {
+	forward = logger
+}
+
 // ctxlog extends the standard log package by adding an alternative concept of log prefix:
 // Instead of tying the prefix to a Logger which would have to be handed around,
 // the prefix is tied to a Context and hence can be transparently propagated.
@@ -40,12 +55,12 @@ func Addf(ctx context.Context, format string, args ...any) context.Context {
 
 // like log.Print() but eventually prefixed with context value (if any)
 func Print(ctx context.Context, args ...any) {
-	log.Output(2, prefixed(ctx, fmt.Sprint(args...)))
+	forward.Printf(prefixed(ctx, fmt.Sprint(args...)))
 }
 
 // like log.Printf() but eventually prefixed with context value (if any)
 func Printf(ctx context.Context, format string, args ...any) {
-	log.Output(2, prefixed(ctx, fmt.Sprintf(format, args...)))
+	forward.Printf(prefixed(ctx, fmt.Sprintf(format, args...)))
 }
 
 // like log.Fatal() but eventually prefixed with context value (if any)
