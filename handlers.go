@@ -1,6 +1,9 @@
 package ctxlog
 
-import "net/http"
+import (
+	"net/http"
+	"runtime/debug"
+)
 
 // middleware adding a http requests RemoteAddr to log context
 func RequestClient(next http.Handler) http.Handler {
@@ -38,7 +41,7 @@ func PanicRecovery(next http.Handler) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if err := recover(); err != nil {
-					Printf(r.Context(), "caught PANIC: %s", err)
+					Printf(r.Context(), "PANIC: %s\n%s", err, string(debug.Stack()))
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}()
