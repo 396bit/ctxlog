@@ -31,3 +31,18 @@ func RequestPath(next http.Handler) http.Handler {
 		},
 	)
 }
+
+// middleware catching and logging panics
+func PanicRecovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					Printf(r.Context(), "caught PANIC: %s", err)
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}()
+			next.ServeHTTP(w, r)
+		},
+	)
+}
