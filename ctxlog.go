@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 )
 
 type logger interface {
@@ -27,25 +26,44 @@ func Forward(logger logger) {
 // Instead of tying the prefix to a Logger which would have to be handed around,
 // the prefix is tied to a Context and hence can be transparently propagated.
 
-type ctxKey struct{}
+type ctxKeyType string
+
+const ctxKey = ctxKeyType("ctxlog")
 
 // private: return s prefixed with concatenated prefix(es) from context (if any)
 func prefixed(ctx context.Context, s string) string {
-	if prefix, found := ctx.Value(ctxKey{}).(string); found {
-		return strings.Join([]string{
-			prefix,
-			s,
-		}, " ")
+	if prefix, found := ctx.Value(ctxKey).(*string); found {
+		return *prefix + " " + s
 	}
 	return s
 }
 
+// return new Context
+func Clone(ctx context.Context) context.Context {
+	if previous, found := ctx.Value(ctxKey).(*string); found {
+		return Set(ctx, *previous)
+	} else {
+		return ctx
+	}
+}
+
+// return new Context with given log prefix set
+func Set(ctx context.Context, prefix string) context.Context {
+	newPrefix := prefix
+	return context.WithValue(ctx, ctxKey, &newPrefix)
+}
+func Setf(ctx context.Context, format string, args ...any) context.Context {
+	return Set(ctx, fmt.Sprintf(format, args...))
+}
+
 // return new Context with given log prefix added
 func Add(ctx context.Context, prefix string) context.Context {
-	if previous, found := ctx.Value(ctxKey{}).(string); found {
-		prefix = strings.Join([]string{previous, prefix}, " ")
+	if previous, found := ctx.Value(ctxKey).(*string); found {
+		*previous = *previous + " " + prefix
+		return ctx
+	} else {
+		return Set(ctx, prefix)
 	}
-	return context.WithValue(ctx, ctxKey{}, prefix)
 }
 
 // like Add but formatted
@@ -55,12 +73,12 @@ func Addf(ctx context.Context, format string, args ...any) context.Context {
 
 // like log.Print() but eventually prefixed with context value (if any)
 func Print(ctx context.Context, args ...any) {
-	forward.Printf(prefixed(ctx, fmt.Sprint(args...)))
+	forward.Print(prefixed(ctx, fmt.Sprint(args...)))
 }
 
 // like log.Printf() but eventually prefixed with context value (if any)
 func Printf(ctx context.Context, format string, args ...any) {
-	forward.Printf(prefixed(ctx, fmt.Sprintf(format, args...)))
+	forward.Print(prefixed(ctx, fmt.Sprintf(format, args...)))
 }
 
 // like log.Fatal() but eventually prefixed with context value (if any)

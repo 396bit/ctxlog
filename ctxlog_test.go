@@ -8,22 +8,22 @@ import (
 
 func TestMultiline(t *testing.T) {
 
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime)
 	//log.SetOutput(os.Stderr)
 
 	c := context.Background()
-
 	c1 := Add(c, "Prefix-#1")
-	c2 := Add(c1, "Prefix-#2")
 
-	Print(c, "string", 3, true)
-	Print(c1, "string", 3, true)
-	Print(c2, "string", 3, true)
+	Print(c, "see no prefix")
+	Print(c1, "see prefix #1")
 
-	Print(c2, "this is a\nmulti\nline\nstring")
-	Printf(c2, "string = '%s' and number = '%d'", "bla", 42)
+	c2 := Set(c, "Prefix-#2")
+	c12 := Add(c1, "Prefix-#2")
+	c23 := Set(c2, "Prefix-#3")
 
-	// if err != nil {
-	// 	t.Error(err)
-	// }
+	Print(c12, "see prefix #1 + #2")
+	Print(c1, "see prefix #1 + #2 too!")
+	Print(c2, "see prefix #2")
+	Print(c23, "see prefix #3")
+
 }
