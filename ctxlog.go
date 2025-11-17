@@ -60,7 +60,7 @@ func prefixed(ctx context.Context, s string) string {
 // Return new Context with given log prefix added.
 // The prefix actually gets added to the PROVIDED context which also is returned.
 // A new context is only created if the parent context does not already have a prefix.
-// See [AddCloned]
+// See [CloneAdd]
 func Add(ctx context.Context, prefix string) context.Context {
 	if prefix == "" {
 		return ctx
@@ -81,7 +81,7 @@ func Addf(ctx context.Context, format string, args ...any) context.Context {
 
 // Return NEW Context whose log prefix is A COPY of the provided parents one extended by the provided one.
 // The given parent context IS NOT CHANGED.
-func AddCloned(ctx context.Context, prefix string) context.Context {
+func CloneAdd(ctx context.Context, prefix string) context.Context {
 	if previous, found := ctx.Value(ctxKey).(*string); found {
 		if prefix == "" {
 			prefix = *previous
@@ -93,8 +93,8 @@ func AddCloned(ctx context.Context, prefix string) context.Context {
 }
 
 // like AddCloned but formatted
-func AddClonedf(ctx context.Context, format string, args ...any) context.Context {
-	return AddCloned(ctx, fmt.Sprintf(format, args...))
+func CloneAddf(ctx context.Context, format string, args ...any) context.Context {
+	return CloneAdd(ctx, fmt.Sprintf(format, args...))
 }
 
 // like log.Print() but eventually prefixed with context value (if any)
