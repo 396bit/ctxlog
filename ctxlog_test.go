@@ -17,13 +17,13 @@ func TestMultiline(t *testing.T) {
 	Print(c, "see no prefix")
 	Print(c1, "see prefix #1")
 
-	c2 := Set(c, "Prefix-#2")
+	c2 := AddCloned(c, "Prefix-#2")
 	c12 := Add(c1, "Prefix-#2")
-	c23 := Set(c2, "Prefix-#3")
+	c23 := AddCloned(c2, "Prefix-#3")
 
 	Print(c12, "see prefix #1 + #2")
 	Print(c1, "see prefix #1 + #2 too!")
 	Print(c2, "see prefix #2")
-	Print(c23, "see prefix #3")
+	Print(c23, "see prefix #2 + #3")
 
 }

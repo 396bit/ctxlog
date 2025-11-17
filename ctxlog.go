@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 type logger interface {
@@ -38,37 +39,62 @@ func prefixed(ctx context.Context, s string) string {
 	return s
 }
 
-// return new Context
-func Clone(ctx context.Context) context.Context {
-	if previous, found := ctx.Value(ctxKey).(*string); found {
-		return Set(ctx, *previous)
-	} else {
+// // return new Context
+// func Clone(ctx context.Context) context.Context {
+// 	if previous, found := ctx.Value(ctxKey).(*string); found {
+// 		return Set(ctx, *previous)
+// 	} else {
+// 		return ctx
+// 	}
+// }
+
+// // return new Context with given log prefix set
+// func Set(ctx context.Context, prefix string) context.Context {
+// 	newPrefix := prefix
+// 	return context.WithValue(ctx, ctxKey, &newPrefix)
+// }
+// func Setf(ctx context.Context, format string, args ...any) context.Context {
+// 	return Set(ctx, fmt.Sprintf(format, args...))
+// }
+
+// Return new Context with given log prefix added.
+// The prefix actually gets added to the PROVIDED context which also is returned.
+// A new context is only created if the parent context does not already have a prefix.
+// See [AddCloned]
+func Add(ctx context.Context, prefix string) context.Context {
+	if prefix == "" {
 		return ctx
 	}
-}
-
-// return new Context with given log prefix set
-func Set(ctx context.Context, prefix string) context.Context {
-	newPrefix := prefix
-	return context.WithValue(ctx, ctxKey, &newPrefix)
-}
-func Setf(ctx context.Context, format string, args ...any) context.Context {
-	return Set(ctx, fmt.Sprintf(format, args...))
-}
-
-// return new Context with given log prefix added
-func Add(ctx context.Context, prefix string) context.Context {
 	if previous, found := ctx.Value(ctxKey).(*string); found {
-		*previous = *previous + " " + prefix
+		*previous = *previous + " " + strings.Clone(prefix)
 		return ctx
 	} else {
-		return Set(ctx, prefix)
+		prefix = strings.Clone(prefix)
+		return context.WithValue(ctx, ctxKey, &prefix)
 	}
 }
 
 // like Add but formatted
 func Addf(ctx context.Context, format string, args ...any) context.Context {
 	return Add(ctx, fmt.Sprintf(format, args...))
+}
+
+// Return NEW Context whose log prefix is A COPY of the provided parents one extended by the provided one.
+// The given parent context IS NOT CHANGED.
+func AddCloned(ctx context.Context, prefix string) context.Context {
+	if previous, found := ctx.Value(ctxKey).(*string); found {
+		if prefix == "" {
+			prefix = *previous
+		} else {
+			prefix = *previous + " " + strings.Clone(prefix)
+		}
+	}
+	return context.WithValue(ctx, ctxKey, &prefix)
+}
+
+// like AddCloned but formatted
+func AddClonedf(ctx context.Context, format string, args ...any) context.Context {
+	return AddCloned(ctx, fmt.Sprintf(format, args...))
 }
 
 // like log.Print() but eventually prefixed with context value (if any)
